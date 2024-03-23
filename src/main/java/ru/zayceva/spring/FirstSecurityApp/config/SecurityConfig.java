@@ -79,7 +79,7 @@ public class SecurityConfig{
                             //.requestMatchers(HttpMethod.DELETE).hasRole("ADMIN")
                             //.requestMatchers("/admin/**").hasAnyRole("ADMIN")
                             //.requestMatchers("/user/**").hasAnyRole("USER", "ADMIN")
-                            .requestMatchers("/auth/login", "/error").permitAll()
+                            .requestMatchers("/auth/login", "/auth/registration", "/error").permitAll()
                             .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/auth/login")
