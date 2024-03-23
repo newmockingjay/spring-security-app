@@ -31,7 +31,8 @@ import ru.zayceva.spring.FirstSecurityApp.services.PersonDetailsService;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(
-        securedEnabled = true)
+        securedEnabled = true,
+        prePostEnabled = true)
 public class SecurityConfig{
 
     private final PersonDetailsService personDetailsService;
@@ -104,10 +105,7 @@ public class SecurityConfig{
         http //.csrf((csrf) -> csrf.disable())
                 .authorizeHttpRequests(authorizationManagerRequestMatcherRegistry ->
                     authorizationManagerRequestMatcherRegistry
-                            //.requestMatchers(HttpMethod.DELETE).hasRole("ADMIN")
-                            //.requestMatchers("/admin/**").hasAnyRole("ADMIN")
-                            //.requestMatchers("/user/**").hasAnyRole("USER", "ADMIN")
-                            .requestMatchers("/admin").hasRole("ADMIN")
+                            //.requestMatchers("/admin").hasRole("ADMIN")
                             .requestMatchers("/auth/login", "/auth/registration", "/error").permitAll()
                             .anyRequest().hasAnyRole("ADMIN", "USER"))
                             //.anyRequest().authenticated())
