@@ -1,12 +1,15 @@
 package ru.zayceva.spring.FirstSecurityApp.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.WebSecurityConfigurer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -28,15 +31,16 @@ import ru.zayceva.spring.FirstSecurityApp.services.PersonDetailsService;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(
-        securedEnabled = true,
-        jsr250Enabled = true)
+        securedEnabled = true)
 public class SecurityConfig{
 
     private final PersonDetailsService personDetailsService;
+    private final AuthenticationConfiguration authenticationConfiguration;
 
     @Autowired
-    public SecurityConfig(PersonDetailsService personDetailsService) {
+    public SecurityConfig(PersonDetailsService personDetailsService, AuthenticationConfiguration authenticationConfiguration) {
         this.personDetailsService = personDetailsService;
+        this.authenticationConfiguration = authenticationConfiguration;
     }
 
 //    @Bean
@@ -62,10 +66,34 @@ public class SecurityConfig{
 //        return new InMemoryUserDetailsManager(user);
 //    }
 
-    @Autowired
-    void registerProvider(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(personDetailsService);
+//    @Autowired
+//    void registerProvider(AuthenticationManagerBuilder auth) throws Exception {
+//        auth.userDetailsService(personDetailsService)
+//                .passwordEncoder(getPasswordEncoder());
+//    }
+
+//    @Bean
+//    public void authenticationManager(AuthenticationManagerBuilder auth) throws Exception{
+//         auth.userDetailsService(personDetailsService)
+//                .passwordEncoder(getPasswordEncoder());
+//    }
+    @Bean
+    public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
+        AuthenticationManagerBuilder auth = http.getSharedObject(AuthenticationManagerBuilder.class);
+        auth.userDetailsService(personDetailsService)
+                .passwordEncoder(getPasswordEncoder());
+        return auth.build();
     }
+
+//    @Autowired
+//    void configure(AuthenticationManagerBuilder builder) throws Exception {
+//        builder.userDetailsService(personDetailsService)
+//                .passwordEncoder(getPasswordEncoder());
+//    }
+//    @Bean
+//    AuthenticationManager authenticationManager() throws Exception {
+//        return authenticationConfiguration.getAuthenticationManager();
+//    }
 
 //    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
 //        auth.userDetailsService(personDetailsService);
@@ -88,7 +116,8 @@ public class SecurityConfig{
                         .defaultSuccessUrl("/hello"))
                 .logout(logout -> logout
                         .logoutUrl("/logout")
-                        .logoutSuccessUrl("/auth/login"));
+                        .logoutSuccessUrl("/auth/login"))
+                .authenticationManager(authenticationManager(http));
         return http.build();
     }
 
@@ -113,7 +142,7 @@ public class SecurityConfig{
     // как щтфруется пароль
     @Bean
     public PasswordEncoder getPasswordEncoder(){
-        return NoOpPasswordEncoder.getInstance();
+        return new BCryptPasswordEncoder();
     }
 
     //////////////////////////
