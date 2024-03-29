@@ -15,6 +15,7 @@ import org.springframework.security.config.annotation.web.WebSecurityConfigurer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -25,6 +26,7 @@ import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import ru.zayceva.spring.FirstSecurityApp.security.AuthProviderImpl;
 import ru.zayceva.spring.FirstSecurityApp.services.PersonDetailsService;
 
@@ -37,11 +39,13 @@ public class SecurityConfig{
 
     private final PersonDetailsService personDetailsService;
     private final AuthenticationConfiguration authenticationConfiguration;
+    private final JWTFilter jwtFilter;
 
     @Autowired
-    public SecurityConfig(PersonDetailsService personDetailsService, AuthenticationConfiguration authenticationConfiguration) {
+    public SecurityConfig(PersonDetailsService personDetailsService, AuthenticationConfiguration authenticationConfiguration, JWTFilter jwtFilter) {
         this.personDetailsService = personDetailsService;
         this.authenticationConfiguration = authenticationConfiguration;
+        this.jwtFilter = jwtFilter;
     }
 
 //    @Bean
@@ -83,6 +87,7 @@ public class SecurityConfig{
         AuthenticationManagerBuilder auth = http.getSharedObject(AuthenticationManagerBuilder.class);
         auth.userDetailsService(personDetailsService)
                 .passwordEncoder(getPasswordEncoder());
+
         return auth.build();
     }
 
@@ -102,7 +107,7 @@ public class SecurityConfig{
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http //.csrf((csrf) -> csrf.disable())
+        http .csrf((csrf) -> csrf.disable())
                 .authorizeHttpRequests(authorizationManagerRequestMatcherRegistry ->
                     authorizationManagerRequestMatcherRegistry
                             //.requestMatchers("/admin").hasRole("ADMIN")
@@ -117,7 +122,11 @@ public class SecurityConfig{
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/auth/login"))
+                .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationManager(authenticationManager(http));
+
+        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

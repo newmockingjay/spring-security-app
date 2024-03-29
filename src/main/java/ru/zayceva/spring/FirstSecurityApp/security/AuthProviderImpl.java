@@ -12,6 +12,7 @@ import ru.zayceva.spring.FirstSecurityApp.services.PersonDetailsService;
 
 import java.util.Collections;
 
+// не используется
 @Component
 public class AuthProviderImpl implements AuthenticationProvider {
 
